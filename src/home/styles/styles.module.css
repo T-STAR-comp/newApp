@@ -93,7 +93,7 @@ p {
 }
 
 .buy_button, .confirm_button {
-    background: yellow;
+    background: rgb(193, 193, 0);
     color: white;
     border: none;
     padding: 12px;
