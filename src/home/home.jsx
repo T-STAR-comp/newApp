@@ -110,7 +110,7 @@ const HomeComp = () => {
                 <input
                   type="text"
                   value={roomNumber}
-                  onChange={(e) => setRoomNumber(e.target.value)}
+                  onChange={(e) => setRoomNumber(parseInt(e.target.value))}
                   placeholder="Enter Room Number"
                   className={styles.input_field}
                 />
