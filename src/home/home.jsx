@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./styles/styles.module.css";
+import { Link } from "react-router-dom";
 
 const products = [
     {
@@ -145,7 +146,7 @@ const HomeComp = () => {
       </div>
 
       <div className={styles.footer}>
-        <p>© 2025 DMI University Utility Store. <a href="/Login"><p className={styles.oasis}>Powered By OASIS</p></a> All rights reserved.</p>
+        <p>© 2025 DMI University Utility Store. <Link className={styles.Link} to={"/Login"}><p className={styles.oasis}>Powered By OASIS</p></Link> All rights reserved.</p>
       </div>
     </div>
   );
