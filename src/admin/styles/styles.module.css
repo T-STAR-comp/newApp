@@ -131,6 +131,14 @@
   .confirm_button:hover {
     background: #28a745;
   }
+
+  .order_item{
+    background-color: #b3b3b365;
+    margin-top: 15px;
+    padding: 5px;
+    border: none;
+    border-radius: 10px;
+  }
   
   .account_section {
     background: white;

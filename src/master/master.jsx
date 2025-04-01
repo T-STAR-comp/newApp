@@ -1,31 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./styles/styles.module.css";
 
 const MasterAdmin = () => {
+
+  useEffect(() => {
+    FetchUsers();
+  }, []);
+
   const [users, setUsers] = useState([
-    { id: 1, name: "John Doe", phone: "265991234567", role: "Admin" },
+    { id: 1, name: "test test", phone: "test00000", role: "TEST" },
   ]);
 
-  const [newUser, setNewUser] = useState({ name: "", phone: "",password:"", role: "" });
+  const [newUser, setNewUser] = useState({ name: "", phonenumber: "",password:"", role: "" });
   //const [passwords, setPasswords] = useState({});
+
+  const FetchUsers = async () => {
+    try{
+      const Resp = await fetch (import.meta.env.VITE_GetUsersURL);
+      const Data = await Resp.json();
+      console.log(Data);
+      if (Data.length > 0) {
+        setUsers(Data);
+      };
+    }
+    catch(err) {
+      if (err) {
+        alert(err);
+      };
+    };
+  };
 
   const handleUserChange = (e) => {
     const { name, value } = e.target;
     setNewUser({ ...newUser, [name]: value });
   };
 
-  const addUser = () => {
-    if (!newUser.name || !newUser.phone || !newUser.password || !newUser.role) {
+  const addUser = async () => {
+    if (!newUser.name || !newUser.phonenumber || !newUser.password || !newUser.role) {
       alert("Please fill in all fields.");
       return;
     }
-    setUsers([...users, { ...newUser, id: users.length + 1 }]);
-    setNewUser({ name: "", phone: "", password: "", role: "" });
-    alert("User added successfully!");
+    
+    try {
+      const Resp = await fetch(import.meta.env.VITE_CreateNewUserURL,{
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(newUser),
+      });
+
+      const Data = await Resp.json();
+      setNewUser({name: "", phonenumber: "",password:"", role: ""});
+      window.location.reload();
+
+    }
+    catch (err) {
+      if (err) {
+        alert(err);
+      };
+    };
   };
 
-  const deleteUser = (userId) => {
-    setUsers(users.filter((user) => user.id !== userId));
+  const deleteUser = async (name) => {
+    if (name) {
+      try {
+        const Resp = await fetch (import.meta.env.VITE_DeleteUserURL,{
+          method: "DELETE",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify({name})
+        });
+
+        const Data = await Resp.json();
+        window.location.reload();
+      }
+      catch (err) {
+        if (err) {
+          alert(err);
+        };
+      };
+    };
   };
 
   const updatePassword = (userId, newPassword) => {
@@ -60,10 +114,12 @@ const MasterAdmin = () => {
           className={styles.input_field}
         />
         <input
-          type="tel"
-          name="phone"
+          type="number"
+          minLength={9}
+          maxLength={10}
+          name="phonenumber"
           placeholder="Phone Number"
-          value={newUser.phone}
+          value={newUser.phonenumber}
           onChange={handleUserChange}
           className={styles.input_field}
         />
@@ -99,13 +155,18 @@ const MasterAdmin = () => {
           <ul>
             {users.map((user) => (
               <li key={user.id} className={styles.user_item}>
-                <strong>{user.name}</strong> - {user.phone} ({user.role})
-                <button
-                  onClick={() => deleteUser(user.id)}
+                <strong>{user.name}</strong> - {user.phonenumber} ({user.role})
+                {
+                  user.role === "Admin" ? 
+                  null
+                  :
+                  <button
+                  onClick={() => deleteUser(user.name)}
                   className={styles.delete_button}
                 >
                   Delete
                 </button>
+                }
               </li>
             ))}
           </ul>

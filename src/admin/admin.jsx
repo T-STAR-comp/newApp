@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./styles/styles.module.css";
 
 const Admin = () => {
-  const [products, setProducts] = useState([
-    { id: 1, name: "Notebook", price: "500", image: "https://via.placeholder.com/100" },
-  ]);
+  const [products, setProducts] = useState([]);
 
   const [orders, setOrders] = useState([
     {
@@ -20,44 +18,145 @@ const Admin = () => {
     },
   ]);
 
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", image: "" });
-
+  const [newProduct, setNewProduct] = useState({ prodName: "", price: "", image: "", name: sessionStorage.getItem("USER") });
+  const [orderID,setorderID] = useState("");
   const [accountBalance, setAccountBalance] = useState(10000); // Example balance
   const [withdrawal, setWithdrawal] = useState({ password: "", amount: "" });
 
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewProduct({ ...newProduct, [name]: value });
   };
 
-  const addProduct = () => {
-    if (!newProduct.name || !newProduct.price || !newProduct.image) {
-      alert("Please fill in all fields.");
-      return;
+  const addProduct = async () => {
+    if (newProduct.prodName != "", newProduct.price != ""  , newProduct.image != "" , newProduct.name != "" ) {
+      try {
+        const Resp = await fetch(import.meta.env.VITE_CreateNewProductAdminURL,{
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify(newProduct)
+        });
+
+        const Data = await Resp.json();
+        if (Data){
+          window.location.reload();
+        };
+      }
+      catch (err) {
+        if (err) {
+          alert(err);
+        };
+      };
     }
-    setProducts([...products, { ...newProduct, id: products.length + 1 }]);
-    setNewProduct({ name: "", price: "", image: "" });
-    alert("Product added successfully!");
   };
 
-  const deleteProduct = (productId) => {
-    setProducts(products.filter((product) => product.id !== productId));
+  const deleteProduct = async (product) => {
+    const name = sessionStorage.getItem("USER");
+    try {
+      const Resp = await fetch (import.meta.env.VITE_DeleteExistingProductAdminURL,{
+        method: "DELETE",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({product:product,name})
+      });
+      const Data = await Resp.json();
+      if (Data){
+        window.location.reload();
+      }
+    }
+    catch (err) {
+      if (err) {
+        alert(err);
+      };
+    };
   };
 
-  const handleOrderIdChange = (orderId, value) => {
-    setOrders(orders.map((order) => 
-      order.id === orderId ? { ...order, orderId: value } : order
-    ));
+  const FetchAllUserOrders = async () => {
+    try {
+      const Resp = await fetch (import.meta.env.VITE_FetchUserOrdersURL,{
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({name:sessionStorage.getItem("USER")})
+      });
+      const Data = await Resp.json();
+      if (Data) {
+        setOrders(Data);
+      };
+    }
+    catch (err) {
+      if (err) {
+        alert (err);
+      };
+    };
+  };
+  
+
+  const handleOrderIdChange = (e) => {
+    setorderID(e);
   };
 
-  const confirmDelivery = (orderId) => {
-    setOrders(orders.map((order) =>
-      order.id === orderId ? { ...order, delivered: true } : order
-    ));
+  const confirmDelivery = async () => {
+    try {
+      const Resp = await fetch (import.meta.env.VITE_DeleteUserOrderURL,{
+        method: "DELETE",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({orderID:orderID,name:sessionStorage.getItem("USER")})
+      });
+      const Data = await Resp.json();
+      if (Data){
+        window.location.reload();
+      };
+
+    }
+    catch (err) {
+      if (err) {
+        alert (err);
+      };
+    };
   };
+  
+  const FetchUserProd = async () => {
+    const name = sessionStorage.getItem("USER");
+    try {
+      const Resp = await fetch(import.meta.env.VITE_FetchUserProductsURL,{
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({name:name})
+      });
+      
+      const Data = await Resp.json();
+      if(Array.isArray(Data)){
+        setProducts(Data);
+      }else{
+        setProducts([]);
+      }
+    
+    }
+    catch (err) {
+      if (err) {
+        console.log(err)
+      };
+    };
+  };
+  
+  useEffect(() => {
+    FetchUserProd();
+    FetchAllUserOrders();
+  }, []);
 
   const logoutAdmin = () => {
-    alert("Logging out...");
+    sessionStorage.removeItem("USER");
+    window.location.reload();
     // Redirect logic can be added here
   };
 
@@ -101,9 +200,9 @@ const Admin = () => {
         <h2>Add New Product</h2>
         <input
           type="text"
-          name="name"
+          name="prodName"
           placeholder="Product Name"
-          value={newProduct.name}
+          value={newProduct.prodName}
           onChange={handleInputChange}
           className={styles.input_field}
         />
@@ -137,10 +236,10 @@ const Admin = () => {
           <ul>
             {products.map((product) => (
               <li key={product.id} className={styles.product_item}>
-                <img src={product.image} alt={product.name} width="50" />
-                <strong>{product.name}</strong> - MWK {product.price}
+                <img src={product.imageUrl} alt={product.product} width="50" />
+                <strong>{product.product}</strong> - MWK {product.price}
                 <button
-                  onClick={() => deleteProduct(product.id)}
+                  onClick={() => deleteProduct(product.product)}
                   className={styles.delete_button}
                 >
                   Delete
@@ -157,32 +256,30 @@ const Admin = () => {
         {orders.length === 0 ? (
           <p>No new orders.</p>
         ) : (
-          <ul>
+          <ul className={styles.orderList_div}>
             {orders.map((order) => (
               <li key={order.id} className={styles.order_item}>
-                <strong>{order.product}</strong> - {order.quantity} pcs
+                <strong>{order.orderName}</strong> - {order.quantity} pcs
                 <br />
-                Buyer: {order.buyer}, Hostel: {order.hostel}, Room: {order.room}
+                Buyer: {order.customer}, Hostel: {order.hostel}, Room: {order.room}
                 <br />
-                Email: {order.email}
+                Email: {order.email || "Not Provided"}
                 <br />
                 <input
                   type="text"
                   placeholder="Order ID"
-                  value={order.orderId}
-                  onChange={(e) => handleOrderIdChange(order.id, e.target.value)}
+                  value={order.id}
+                  onChange={(e) => handleOrderIdChange(e.target.value)}
                   className={styles.input_order_id}
                 />
-                {order.delivered ? (
-                  <span className={styles.delivered}>Delivered ✅</span>
-                ) : (
-                  <button
-                    onClick={() => confirmDelivery(order.id)}
-                    className={styles.confirm_button}
-                  >
-                    Confirm Delivery
-                  </button>
-                )}
+                
+                <button
+                  onClick={confirmDelivery}
+                  className={styles.confirm_button}
+                >
+                  Confirm Delivery
+                </button>
+
               </li>
             ))}
           </ul>

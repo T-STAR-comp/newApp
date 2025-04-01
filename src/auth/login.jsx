@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom"; // Assuming you're using React Router
+import { Link } from "react-router-dom";
 import styles from "./styles/styles.module.css";
 
 const Login = () => {
@@ -13,8 +13,32 @@ const Login = () => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = () => {
-    alert(`Logging in as ${credentials.role}`);
+  const handleLogin = async () => {
+    if (credentials.role != "", credentials.name != "", credentials.password != "") {
+      try {
+        const Resp = await fetch (import.meta.env.VITE_Auth_Login_URL,{
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify(credentials)
+        });
+
+        const Data = await Resp.json();
+        if (Data.message === "ok") {
+          sessionStorage.setItem("USER",Data.name);
+          window.location.reload();
+        };
+      }
+      catch (err) {
+        if (err) {
+          alert(err);
+        };
+      };
+    }
+    else {
+      alert("Please fill all your details!");
+    };
   };
 
   return (

@@ -10,17 +10,32 @@ import LandingPage from './landing/landing'
 
 function App() {
 
-  return (
-    <>
-      <Routes>
-        <Route path='/home' element={<HomeComp/>} />
-        <Route path='admin' element={<Admin/>} />
-        <Route path='/master' element={<MasterAdmin/>} />
-        <Route path='/Login' element={<Login/>} />
-        <Route path='/' element={<LandingPage/>} />
-      </Routes>
-    </>
-  )
+  const TOKEN = sessionStorage.getItem("USER");
+
+  
+  if (!sessionStorage.getItem("USER")) {
+    return (
+      <>
+        <Routes>
+          <Route path='/home' element={<HomeComp/>} />
+          <Route path='/master' element={<MasterAdmin/>} />
+          <Route path='/Login' element={<Login/>} />
+          <Route path='/' element={<LandingPage/>} />
+        </Routes>
+      </>
+    )
+  };
+  
+  if (sessionStorage.getItem("USER")) {
+    return(
+      <>
+        <Routes>
+          <Route path='/' element={<Admin/>} />
+          <Route path='*' element={<Admin/>} />
+        </Routes>
+      </>
+    );
+  };
 }
 
 export default App
