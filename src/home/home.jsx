@@ -39,6 +39,9 @@ const HomeComp = () => {
     } catch (err) {
       setConnection(true);
     }
+    finally{
+      setloading(false)
+    }
   };
 
   useEffect(() => {
