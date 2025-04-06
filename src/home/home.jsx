@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import styles from "./styles/styles.module.css";
 import { Link } from "react-router-dom";
+import Loader from "../loaders/loader";
+import NoConnection from "../connState/connsatatus";
 
 const HomeComp = () => {
   const hostels = ["Select Hostel", "Alpha Hostel", "Beta Hostel", "Gamma Hostel", "Delta Hostel"];
@@ -10,9 +12,11 @@ const HomeComp = () => {
   const [hostel, setHostel] = useState(hostels[0]);
   const [roomNumber, setRoomNumber] = useState("");
   const [name, setName] = useState("");
+  const [Lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertMsg, setAlertMsg] = useState("");
+  const [Connection, setConnection] = useState(false);
+  const [loading, setloading] = useState(false);
+
 
   const handleBuyClick = (productId) => {
     setSelectedProduct(productId);
@@ -23,20 +27,17 @@ const HomeComp = () => {
     setEmail("");
   };
 
-  const closeAlert = () => {
-    setAlertVisible(false);
-  };
-
   const fetchAllProducts = async () => {
+    setloading(true)
     try {
       const response = await fetch(import.meta.env.VITE_FetchAllProductsURL);
       const data = await response.json();
       if (data) {
         setProducts(data);
-        console.log(data);
+        setloading(false);
       }
     } catch (err) {
-      alert(err);
+      setConnection(true);
     }
   };
 
@@ -44,7 +45,42 @@ const HomeComp = () => {
     fetchAllProducts();
   }, []);
 
-  const handleConfirmPurchase = async (prodID, user, product) => {
+  const HandlePayment = async (price,prodID, user, product) => {
+
+    const i = quantity * price;
+    const iadd = price*(1/100);
+    const tot = i+iadd;
+
+    if (email !== "" || name !== "" || Lastname !== ""){
+      setloading(true);
+      
+      try {
+        const Resp = await fetch (import.meta.env.VITE_PayOrderURL,{
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify({amount:tot,email:email,first_name:name,last_name:Lastname})
+        });
+        const Data = await Resp.json();
+        console.log(Data);
+        Data.status === "success" ? 
+        handleConfirmPurchase(Data.data.data.tx_ref,Data.data.checkout_url,prodID, user, product) :
+        window.location.href = ('http://localhost:5173/PayError');
+      }
+      catch (err) {
+        if (err) {
+          alert(err);
+        };
+      }
+      finally {
+        setloading(false);
+      };
+    };
+
+  };
+
+  const handleConfirmPurchase = async (payTXref,checkoutURL,prodID, user, product) => {
     try {
       const response = await fetch(import.meta.env.VITE_CreateNewOrderURL, {
         method: "POST",
@@ -63,26 +99,30 @@ const HomeComp = () => {
       });
       const data = await response.json();
       if (data.message === "ok") {
-        setAlertVisible(true);
-        setAlertMsg(`${data.orderID}`);
         setSelectedProduct(null);
+        sessionStorage.setItem("PAYMENTID",payTXref);
+        sessionStorage.setItem("ORDERID",data.orderID);
+        sessionStorage.setItem("PRODUCTUSER",user);
+        window.location.href = checkoutURL;
+        setloading(true);
       }
-      console.log(data);
     } catch (err) {
       alert(err);
     }
   };
 
+  if (loading === true) {
+    return (
+      <Loader/>
+    );
+  };
+
+  if (Connection === true) {
+    return <NoConnection/>
+  };
+
   return (
     <div className={styles.main_div}>
-      {alertVisible && (
-        <div className={styles.alert_div} onClick={closeAlert}>
-          <span className={styles.alert_message}>
-            Below is your order ID, please take a screenshot. Required when receiving order: {alertMsg}
-          </span>
-        </div>
-      )}
-
       <div className={styles.header}>
         <h1>Welcome to DMI Student Utility Store</h1>
         <p>Purchase all your campus needs in one place!</p>
@@ -129,7 +169,15 @@ const HomeComp = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Name"
+                  placeholder="First Name"
+                  className={styles.input_field}
+                />
+
+                <input
+                  type="text"
+                  value={Lastname}
+                  onChange={(e) => setLastname(e.target.value)}
+                  placeholder="Last Name"
                   className={styles.input_field}
                 />
 
@@ -137,11 +185,11 @@ const HomeComp = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email (Optional)"
+                  placeholder="Email"
                   className={styles.input_field}
                 />
 
-                <button onClick={() => handleConfirmPurchase(product.ID, product.user, product.product)} className={styles.confirm_button}>
+                <button onClick={() =>HandlePayment(product.price,product.ID, product.user, product.product)} className={styles.confirm_button}>
                   Confirm Purchase
                 </button>
               </div>
