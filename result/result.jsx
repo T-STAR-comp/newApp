@@ -1,9 +1,11 @@
 import styles from "./styles/styles.module.css";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate} from "react-router-dom";
 
 const Result = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const [DataState, setDataState] = useState(false);
     
     // Extract orderID from URL state (or fallback)
     const orderID = location.state?.orderID || "N/A";
@@ -19,16 +21,49 @@ const Result = () => {
                 body: JSON.stringify({trans_ID:sessionStorage.getItem("PAYMENTID"),name:sessionStorage.getItem("PRODUCTUSER")})
             });
             const Data = await Resp.json();
-            console.log(Data);
+
+            if (Data.message === "ok") {
+                ChangeState();
+                setDataState(true)
+            };
         }
         catch (err) {
             if (err) {
-                alert(err);
+                window.location.href = ('/PayError');
             };
         };
     };
 
-    return (
+    const ChangeState = async () => {
+        try {
+            const Resp = await fetch (import.meta.env.VITE_ChangeStateOrderURL,{
+                method: "PUT",
+                headers: {
+                    "Content-Type":"application/json"
+                },
+                body: JSON.stringify({orderID:sessionStorage.getItem("ORDERID")})
+            });
+            const Data = await Resp.json();
+
+            if (Data.message === "ok") {
+                sessionStorage.removeItem("ORDERID");
+                sessionStorage.removeItem("PAYMENTID");
+                sessionStorage.removeItem("PRODUCTUSER");
+            };
+        }
+        catch (err) {
+            if (err) {
+                window.location.href = ('/PayError');
+            };
+        };
+    };
+
+    useEffect(() => {
+        PayStatus();
+      }, []);
+    
+      if (DataState === true) {
+       return (
         <div className={styles.success_container}>
             <div className={styles.success_box}>
                 <h1 className={styles.success_title}>Order Placed Successfully 🎉</h1>
@@ -46,7 +81,8 @@ const Result = () => {
                 </button>
             </div>
         </div>
-    );
+        );
+    };
 };
 
 export default Result;

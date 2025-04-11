@@ -18,7 +18,6 @@ const MasterAdmin = () => {
     try{
       const Resp = await fetch (import.meta.env.VITE_GetUsersURL);
       const Data = await Resp.json();
-      console.log(Data);
       if (Data.length > 0) {
         setUsers(Data);
       };
@@ -88,7 +87,8 @@ const MasterAdmin = () => {
   };
 
   const logoutAdmin = () => {
-    alert("Logging out...");
+    sessionStorage.removeItem("ADMIN");
+    window.location.reload();
   };
 
   return (
@@ -97,8 +97,9 @@ const MasterAdmin = () => {
         <h1 className={styles.master_title}>
           <span className={styles.oasis}>Oasis</span> Master Admin
         </h1>
+        
         <button onClick={logoutAdmin} className={styles.logout_button}>
-          Logout of Admin
+          Logout of Master
         </button>
       </div>
 
@@ -158,7 +159,12 @@ const MasterAdmin = () => {
                 <strong>{user.name}</strong> - {user.phonenumber} ({user.role})
                 {
                   user.role === "Admin" ? 
-                  null
+                  <button
+                  onClick={() => deleteUser(user.name)}
+                  className={styles.delete_button}
+                >
+                  Delete
+                </button>
                   :
                   <button
                   onClick={() => deleteUser(user.name)}

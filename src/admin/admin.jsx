@@ -1,27 +1,17 @@
 import { useState, useEffect } from "react";
 import styles from "./styles/styles.module.css";
+import Loader from "../loaders/loader";
 
 const Admin = () => {
   const [products, setProducts] = useState([]);
 
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      orderId: "",
-      product: "Notebook",
-      quantity: 2,
-      buyer: "John Doe",
-      hostel: "Alpha Hostel",
-      room: "A12",
-      email: "johndoe@example.com",
-      delivered: false,
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
 
   const [newProduct, setNewProduct] = useState({ prodName: "", price: "", image: "", name: sessionStorage.getItem("USER") });
   const [orderID,setorderID] = useState("");
-  const [accountBalance, setAccountBalance] = useState(10000); // Example balance
   const [withdrawal, setWithdrawal] = useState({ password: "", amount: "" });
+  const [loading, setloading] = useState(false);
+  const [message, setmessage] = useState("");
 
   
   const handleInputChange = (e) => {
@@ -137,6 +127,7 @@ const Admin = () => {
       const Data = await Resp.json();
       if(Array.isArray(Data)){
         setProducts(Data);
+        console.log(Data);
       }else{
         setProducts([]);
       }
@@ -144,7 +135,29 @@ const Admin = () => {
     }
     catch (err) {
       if (err) {
-        console.log(err)
+        alert(err);
+      };
+    };
+  };
+
+  const FetchUserDetails = async () => {
+    try {
+      const Resp = await fetch (import.meta.env.VITE_FetchUserDetailsURL,{
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({user:sessionStorage.getItem("USER")})
+      });
+      const Data = await Resp.json();
+      if (Data.message === "ok") {
+        sessionStorage.setItem("MOBILENUM",Data.phonenum);
+        sessionStorage.setItem("BALANCE",Data.balance);
+      };
+    }
+    catch (err) {
+      if (err) {
+        alert(err);
       };
     };
   };
@@ -152,12 +165,14 @@ const Admin = () => {
   useEffect(() => {
     FetchUserProd();
     FetchAllUserOrders();
+    FetchUserDetails();
   }, []);
 
   const logoutAdmin = () => {
     sessionStorage.removeItem("USER");
+    sessionStorage.removeItem("BALANCE");
+    sessionStorage.removeItem("MOBILENUM");
     window.location.reload();
-    // Redirect logic can be added here
   };
 
   const handleWithdrawChange = (e) => {
@@ -165,7 +180,7 @@ const Admin = () => {
     setWithdrawal({ ...withdrawal, [name]: value });
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     const { password, amount } = withdrawal;
     const withdrawAmount = parseFloat(amount);
 
@@ -174,14 +189,53 @@ const Admin = () => {
       return;
     }
     
-    if (withdrawAmount > accountBalance) {
+    if (withdrawAmount > sessionStorage.getItem("BALANCE")) {
       alert("Insufficient balance.");
       return;
     }
 
-    setAccountBalance(accountBalance - withdrawAmount);
-    setWithdrawal({ password: "", amount: "" });
-    alert(`MWK ${withdrawAmount} withdrawn successfully!`);
+    //mobileNum,user,operator,amount,password
+
+    if (sessionStorage.getItem("MOBILENUM")) {
+      setloading(true);
+ 
+      const Operator = sessionStorage.getItem("MOBILENUM")[0] === 8 ? 'AIRTEL' : 'TNM';
+      console.log(Operator)
+      console.log(sessionStorage.getItem("MOBILENUM")[0]);
+      console.log(amount);
+      console.log(password);
+      console.log(sessionStorage.getItem("USER"))
+      try {
+        const Resp = await fetch (import.meta.env.VITE_InitializeUserPayout, {
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify(
+            {
+              user:sessionStorage.getItem("USER"),
+              operator: Operator,
+              amount:withdrawAmount,
+              mobileNum: sessionStorage.getItem("MOBILENUM"),
+              password:password
+            }
+          )
+        });
+        const Data = await Resp.json();
+        window.location.reload();
+        console.log(Data);
+      }
+      catch (err) {
+        if (err) {
+          alert(err);
+          console.log(err)
+        };
+      };
+    }
+  };
+
+  if (loading === true) {
+    return <Loader/>
   };
 
   return (
@@ -253,7 +307,7 @@ const Admin = () => {
       {/* Orders Section */}
       <div className={styles.orders_section}>
         <h2>New Orders</h2>
-        {orders.length === 0 ? (
+        {orders.message === "NOn" ? (
           <p>No new orders.</p>
         ) : (
           <ul className={styles.orderList_div}>
@@ -287,7 +341,7 @@ const Admin = () => {
       </div>
        {/* Account Balance & Withdrawal */}
        <div className={styles.account_section}>
-        <h2>MWK {accountBalance.toLocaleString()}</h2>
+        <h2>MWK {sessionStorage.getItem("BALANCE")}</h2>
         <div className={styles.withdraw_form}>
           <input
             type="password"
@@ -309,6 +363,7 @@ const Admin = () => {
             <p>Powered By</p>
             <p className={styles.paychangu}>PayChangu</p>
           </div>
+          
           <button onClick={handleWithdraw} className={styles.withdraw_button}>
             Withdraw
           </button>

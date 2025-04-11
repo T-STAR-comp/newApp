@@ -12,9 +12,6 @@ import Result from '../result/result'
 import NotFound from '../errors/404'
 
 function App() {
-
-  const TOKEN = sessionStorage.getItem("USER");
-
   
   if (!sessionStorage.getItem("USER")) {
     return (
@@ -42,6 +39,17 @@ function App() {
       </>
     );
   };
-}
+
+  if (sessionStorage.getItem("ADMIN")) {
+    return(
+      <>
+        <Routes>
+          <Route path='/' element={<MasterAdmin/>} />
+          <Route path='*' element={<MasterAdmin/>} />
+        </Routes>
+      </>
+    );
+  };
+};
 
 export default App

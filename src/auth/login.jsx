@@ -26,7 +26,13 @@ const Login = () => {
 
         const Data = await Resp.json();
         if (Data.message === "ok") {
-          sessionStorage.setItem("USER",Data.name);
+          if (Data.role === 'User') {
+            sessionStorage.setItem("USER",Data.name);
+          };
+          if (Data.role === 'Admin') {
+            sessionStorage.setItem("ADMIN",Data.name)
+          };
+          window.location.href = ('/');
           window.location.reload();
         };
       }

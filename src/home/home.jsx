@@ -51,8 +51,9 @@ const HomeComp = () => {
   const HandlePayment = async (price,prodID, user, product) => {
 
     const i = quantity * price;
-    const iadd = price*(1/100);
+    const iadd = i*1/100;
     const tot = i+iadd;
+    
 
     if (email !== "" || name !== "" || Lastname !== ""){
       setloading(true);
@@ -69,7 +70,7 @@ const HomeComp = () => {
         console.log(Data);
         Data.status === "success" ? 
         handleConfirmPurchase(Data.data.data.tx_ref,Data.data.checkout_url,prodID, user, product) :
-        window.location.href = ('http://localhost:5173/PayError');
+        window.location.href = ('/PayError');
       }
       catch (err) {
         if (err) {

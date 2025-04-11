@@ -5,7 +5,7 @@ const LandingPage = () => {
   return (
     <div className={styles.landing_container}>
       <header className={styles.navbar}>
-        <h1 className={styles.brand}>DMI utility web</h1><p className={styles.beta}>Beta</p>
+        <h1 className={styles.brand}>DMI Connect</h1><p className={styles.beta}>Beta</p>
         
         <nav>
           <Link to="/login" className={styles.nav_link}>Login</Link>
@@ -36,6 +36,10 @@ const LandingPage = () => {
         <div className={styles.feature_card}>
           <h3>Exclusive Student Discounts</h3>
           <p>Save more with student-only offers.</p>
+        </div>
+        <div className={styles.feature_card}>
+          <h3>Low service Fees</h3>
+          <p>Offers lower service fees when you use this platform.</p>
         </div>
       </section>
 
