@@ -127,7 +127,7 @@ const Admin = () => {
       const Data = await Resp.json();
       if(Array.isArray(Data)){
         setProducts(Data);
-        console.log(Data);
+        
       }else{
         setProducts([]);
       }
@@ -199,12 +199,6 @@ const Admin = () => {
     if (sessionStorage.getItem("MOBILENUM")) {
       setloading(true);
  
-      const Operator = sessionStorage.getItem("MOBILENUM")[0] === 8 ? 'AIRTEL' : 'TNM';
-      console.log(Operator)
-      console.log(sessionStorage.getItem("MOBILENUM")[0]);
-      console.log(amount);
-      console.log(password);
-      console.log(sessionStorage.getItem("USER"))
       try {
         const Resp = await fetch (import.meta.env.VITE_InitializeUserPayout, {
           method: "POST",
@@ -223,12 +217,10 @@ const Admin = () => {
         });
         const Data = await Resp.json();
         window.location.reload();
-        console.log(Data);
       }
       catch (err) {
         if (err) {
           alert(err);
-          console.log(err)
         };
       };
     }

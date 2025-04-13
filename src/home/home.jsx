@@ -67,7 +67,7 @@ const HomeComp = () => {
           body: JSON.stringify({amount:tot,email:email,first_name:name,last_name:Lastname})
         });
         const Data = await Resp.json();
-        console.log(Data);
+
         Data.status === "success" ? 
         handleConfirmPurchase(Data.data.data.tx_ref,Data.data.checkout_url,prodID, user, product) :
         window.location.href = ('/PayError');
